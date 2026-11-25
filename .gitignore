@@ -6,3 +6,13 @@ design/
 /rsrc_windows_amd64.syso
 # Coverage profiles from go test -coverprofile.
 *.out
+# AI assistant instruction files are personal to each contributor and are never committed.
+CLAUDE.md
+CLAUDE.local.md
+AGENTS.md
+GEMINI.md
+.claude/
+.cursor/
+.cursorrules
+.windsurfrules
+.github/copilot-instructions.md
