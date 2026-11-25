@@ -1,0 +1,2 @@
+go test fuzz v1
+string("<svg viewBox=\"0 0 24 24\"><path d=\"M1 1 L2 2\"/>")

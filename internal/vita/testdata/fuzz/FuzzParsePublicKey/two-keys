@@ -1,0 +1,2 @@
+go test fuzz v1
+[]byte("age1lvyvwawkr0mcnnnncaghunadrqkmuf9e6507x9y920xxpp866cnql7dp2z\nage195xa8hx9hjl9gprt4y77qgu6vuedjayhj2ds9tj9fs62duvvgdnq0pfxr4\n")

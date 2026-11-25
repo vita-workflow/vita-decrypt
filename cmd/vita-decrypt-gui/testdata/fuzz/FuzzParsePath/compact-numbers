@@ -1,0 +1,2 @@
+go test fuzz v1
+string("M.5.5-1-1e1 1E+2-3e-1")

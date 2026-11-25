@@ -1,0 +1,7 @@
+# Check out text files with LF everywhere, so Windows checkouts embed the same bytes and builds stay reproducible.
+* text=auto eol=lf
+*.ico binary
+*.syso binary
+*.png binary
+*.ttf binary
+*.woff2 binary

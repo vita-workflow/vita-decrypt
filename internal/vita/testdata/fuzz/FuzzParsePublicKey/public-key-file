@@ -1,0 +1,2 @@
+go test fuzz v1
+[]byte("# Vita key pair: Ops\n# fingerprint: CE94 50DF DFF5 9E9D\nage1lvyvwawkr0mcnnnncaghunadrqkmuf9e6507x9y920xxpp866cnql7dp2z\n")

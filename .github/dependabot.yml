@@ -1,0 +1,45 @@
+# Keeps Go modules, development tools (tools/go.mod), and GitHub Actions on their latest releases (see
+# docs/coding-standards.md section 6). Each group's updates come as one weekly pull request; Dependabot keeps actions
+# pinned by commit SHA with the version comment.
+# The cooldown waits a week after a release before proposing it, so a compromised release has time to be caught;
+# security updates skip the cooldown.
+version: 2
+updates:
+  - package-ecosystem: gomod
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    groups:
+      go-modules:
+        patterns: ["*"]
+    commit-message:
+      prefix: chore
+      include: scope
+
+  - package-ecosystem: gomod
+    directories: [/tools, /tools/actionlint]
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    groups:
+      tools:
+        patterns: ["*"]
+    commit-message:
+      prefix: chore
+      include: scope
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    groups:
+      actions:
+        patterns: ["*"]
+    commit-message:
+      prefix: chore
+      include: scope

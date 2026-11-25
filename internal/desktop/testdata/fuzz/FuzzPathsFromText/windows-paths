@@ -1,0 +1,2 @@
+go test fuzz v1
+string("C:\\Users\\a\\x.age\r\n\"C:\\Users\\a\\y z.age\"\r\nfile:///C:/Users/a/q%20r.age")

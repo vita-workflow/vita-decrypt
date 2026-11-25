@@ -1,0 +1,8 @@
+dist/
+*-private-key.txt
+*.age
+design/
+# Made by scripts/build.sh for the command's Windows build, then removed.
+/rsrc_windows_amd64.syso
+# Coverage profiles from go test -coverprofile.
+*.out

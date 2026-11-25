@@ -1,0 +1,6 @@
+# actionlint 1.7.12 doesn't know GitHub's self-repository syntax (uses: $/...) yet: rhysd/actionlint#711.
+# Remove this once it does.
+paths:
+  .github/workflows/release.yml:
+    ignore:
+      - 'reusable workflow call "\$/'

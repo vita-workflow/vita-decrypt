@@ -1,0 +1,7 @@
+# Files left out of the coverage gate (docs/coding-standards.md section 5.1): only thin adapters that make system calls
+# CI can't run, with no branching logic of their own. Each line is a path from the repository root, then # and the
+# reason. scripts/coverage reads this file.
+
+internal/desktop/desktop_windows.go        # COM and Win32 calls that need a desktop session; logic is in dialog_windows.go and drop_windows.go
+internal/desktop/desktop_darwin.go         # cgo calls into AppKit that need a window server; logic is in drop_darwin.go
+internal/desktop/desktop_darwin_export.go  # one-line cgo callbacks from AppKit into drop_darwin.go

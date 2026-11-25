@@ -1,0 +1,2 @@
+go test fuzz v1
+string("# copied files\n/home/a/Report.pdf.age\nfile:///home/a/Photo%20archive.zip.age\r\n\"/home/a/quoted name.age\"\nrelative/x.age\n")

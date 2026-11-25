@@ -1,0 +1,142 @@
+# Checks every push to main and every pull request on Linux, Windows, and macOS. The release workflow calls it too.
+# The gates are listed in docs/coding-standards.md. Actions are pinned to the full commit SHA of their latest release,
+# and the development tools are versioned in tools/go.mod (see the standards' section 6).
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "17 6 * * 1" # Mondays, so new vulnerabilities are found even when nothing is merged
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  TOOL: go tool -modfile=tools/go.mod
+
+jobs:
+  test:
+    name: test (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5 # v7.1.0
+        with:
+          go-version: stable
+          check-latest: true
+          cache-dependency-path: |
+            go.sum
+            tools/go.sum
+            tools/actionlint/go.sum
+
+      - name: Install the desktop app's build headers
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libwayland-dev libx11-dev libx11-xcb-dev \
+            libxkbcommon-x11-dev libgles2-mesa-dev libegl1-mesa-dev libffi-dev libxcursor-dev libvulkan-dev
+
+      - name: Check go.mod
+        if: runner.os == 'Linux'
+        run: |
+          go mod tidy -diff
+          go mod verify
+          for tools in tools tools/actionlint; do (cd "$tools" && go mod tidy -diff && go mod verify); done
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Lint and check formatting
+        run: $TOOL golangci-lint run ./...
+
+      - name: Test with the race detector
+        run: go test -race -count=1 -covermode=atomic -coverprofile="coverage-${{ runner.os }}.out" ./...
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: coverage-${{ runner.os }}
+          path: coverage-${{ runner.os }}.out
+          if-no-files-found: error
+          retention-days: 7
+
+  coverage:
+    name: coverage
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5 # v7.1.0
+        with:
+          go-version: stable
+          check-latest: true
+
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: coverage-*
+          merge-multiple: true
+
+      - name: Require 90% for every package and the total
+        run: go run ./scripts/coverage coverage-*.out
+
+  checks:
+    name: vulnerabilities, workflows, and fuzzing
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5 # v7.1.0
+        with:
+          go-version: stable
+          check-latest: true
+          cache-dependency-path: |
+            go.sum
+            tools/go.sum
+            tools/actionlint/go.sum
+
+      - name: Install the desktop app's build headers
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libwayland-dev libx11-dev libx11-xcb-dev \
+            libxkbcommon-x11-dev libgles2-mesa-dev libegl1-mesa-dev libffi-dev libxcursor-dev libvulkan-dev
+
+      - name: Check for known vulnerabilities
+        run: $TOOL govulncheck ./...
+
+      - name: Lint the workflows
+        run: go tool -modfile=tools/actionlint/go.mod actionlint
+
+      - name: Fuzz each fuzz test for 10 seconds
+        run: |
+          for package in $(go list ./...); do
+            for fuzz_test in $(go test -list '^Fuzz' "$package" | grep '^Fuzz' || true); do
+              echo "::group::$package $fuzz_test"
+              go test -run '^$' -fuzz "^${fuzz_test}\$" -fuzztime 10s "$package"
+              echo "::endgroup::"
+            done
+          done
